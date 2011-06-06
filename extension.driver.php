@@ -337,56 +337,6 @@
 
 		}
 
-		private function __getStructureTables($structure_tables){
-
-			## Create array of tables to ignore for structure-only dump
-			$ignore_tables = array(
-				'tbl_entries_',
-				'tbl_fields_'
-			);
-
-			## Remove tables from list for structure-only dump
-			foreach($structure_tables as $index => $table){
-				foreach($ignore_tables as $starts){
-					if(substr($table, 0, strlen($starts)) === $starts ){
-						unset($structure_tables[$index]);
-					}
-				}
-			}
-
-			## Add fields tables back into list
-			$structure_tables[] = 'tbl_fields_%';
-			sort($structure_tables);
-
-			return $structure_tables;
-
-		}
-
-		private function __getDataTables($data_tables){
-
-			## Create array of tables to ignore for data-only dump
-			$ignore_tables = array(
-				'tbl_authors',
-				'tbl_cache',
-				'tbl_entries_',
-				'tbl_fields_',
-				'tbl_forgotpass',
-				'tbl_sessions'
-			);
-
-			## Remove tables from list for data-only dump
-			foreach($data_tables as $index => $table){
-				foreach($ignore_tables as $starts){
-					if(substr($table, 0, strlen($starts)) === $starts ){
-						unset($data_tables[$index]);
-					}
-				}
-			}
-
-			return $data_tables;
-
-		}
-
 		private function __getStructuralDataTables($tables){
 
 			## Create array of tables to ignore for structural data dump
@@ -408,46 +358,6 @@
 			}
 
 			return $tables;
-
-		}
-
-		private function __dumpSchema($dump, $structure_tables, $tbl_prefix = NULL){
-
-			## Create variables for the dump files
-			$sql_schema = NULL;
-
-			## Grab the schema
-			foreach($structure_tables as $t) $sql_schema .= $dump->export($t, MySQLDump::STRUCTURE_ONLY);
-
-			if($tbl_prefix !== NULL) {
-				$sql_schema = str_replace('`' . $tbl_prefix, '`tbl_', $sql_schema);
-			}
-
-			$sql_schema = preg_replace('/AUTO_INCREMENT=\d+/i', NULL, $sql_schema);
-
-			return $sql_schema;
-
-		}
-
-		private function __dumpData($dump, $data_tables, $tbl_prefix = NULL){
-
-			## Create variables for the dump files
-			$sql_data = NULL;
-
-			## Field data and entry data schemas needs to be apart of the workspace sql dump
-			$sql_data  = $dump->export('tbl_fields_%', MySQLDump::ALL);
-			$sql_data .= $dump->export('tbl_entries_%', MySQLDump::ALL);
-
-			## Grab the data
-			foreach($data_tables as $t){
-				$sql_data .= $dump->export($t, MySQLDump::DATA_ONLY);
-			}
-
-			if($tbl_prefix !== NULL) {
-				$sql_schema = str_replace('`' . $tbl_prefix, '`tbl_', $sql_schema);
-			}
-
-			return $sql_data;
 
 		}
 
