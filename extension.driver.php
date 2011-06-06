@@ -234,10 +234,10 @@
 			## Find table prefix used for this install of Symphony
 			$tbl_prefix = Symphony::Configuration()->get('tbl_prefix', 'database');
 
-			foreach ($tables as $table){
-				$table = str_replace($tbl_prefix, 'tbl_', $table);
-				
-				if($mode == 'authors') {
+			if($mode == 'authors') {
+				foreach ($tables as $table){
+					$table = str_replace($tbl_prefix, 'tbl_', $table);
+
 					switch($table) {
 						case 'tbl_authors':
 						case 'tbl_forgotpass':
@@ -250,15 +250,32 @@
 							break;
 					}
 				}
-				if($mode == 'structure') {
+			}
+			elseif($mode == 'structure') {
+				foreach ($tables as $table){
+					$table = str_replace($tbl_prefix, 'tbl_', $table);
 
-					## Create arrays of tables to dump
-					$db_tables = $this->__getDatabaseTables($tbl_prefix);
-					$structural_data_tables = $this->__getStructuralDataTables($db_tables);
-					$sql_data = $this->__dumpStructuralData($dump, $structural_data_tables);
-
+					if($table == 'tbl_authors'); // ignore authors
+					elseif($table == 'tbl_forgotpass'); // ignore forgotpass
+					elseif($table == 'tbl_sessions'); // ignore sessions
+					elseif($table == 'tbl_cache') {
+						$sql_data .= $dump->export($table, MySQLDump::STRUCTURE_ONLY);
+					}
+					elseif(substr($table, 0, 11) === 'tbl_entries') {
+						$sql_data .= $dump->export($table, MySQLDump::STRUCTURE_ONLY);
+					}
+					elseif($table == 'tbl_entries') {
+						$sql_data .= $dump->export($table, MySQLDump::STRUCTURE_ONLY);
+					}
+					else {
+						$sql_data .= $dump->export($table, MySQLDump::ALL);
+					}
 				}
-				elseif($mode == 'data') {
+			}
+			elseif($mode == 'data') {
+				foreach ($tables as $table){
+					$table = str_replace($tbl_prefix, 'tbl_', $table);
+
 					switch($table) {
 						case 'tbl_authors': // ignore authors
 						case 'tbl_forgotpass':
@@ -271,7 +288,6 @@
 							$sql_data .= $dump->export($table, MySQLDump::ALL);
 					}
 				}
-				
 			}
 			
 			if(Symphony::Configuration()->get('dump', 'dump_db') === 'download') {
@@ -310,73 +326,4 @@
 		private function generateFilename($mode) {
 			return sprintf($this->format, $mode);
 		}
-
-		private function __getDatabaseTables($tbl_prefix){
-
-			## Find all tables in the database
-			$Database = Symphony::Database();
-			$all_tables = $Database->fetch('show tables');
-
-			## Find length of prefix to test for table prefix
-			$prefix_length = strlen($tbl_prefix);
-
-			## Flatten multidimensional tables array
-			$db_tables = array();
-			foreach($all_tables as $table){
-				$value = array_values($table);
-				$value = $value[0];
-
-				## Limit array of tables to those using the table prefix
-				## and replace the table prefix with tbl
-				if(substr($value, 0, $prefix_length) === $tbl_prefix){
-					$db_tables[] = 'tbl_' . substr($value, $prefix_length);
-				}
-			}
-
-			return $db_tables;
-
-		}
-
-		private function __getStructuralDataTables($tables){
-
-			## Create array of tables to ignore for structural data dump
-			$ignore_tables = array(
-				'tbl_authors',
-				'tbl_cache',
-				'tbl_entries',
-				'tbl_forgotpass',
-				'tbl_sessions'
-			);
-
-			## Remove tables from list for structural data dump
-			foreach($tables as $index => $table){
-				foreach($ignore_tables as $starts){
-					if(substr($table, 0, strlen($starts)) === $starts ){
-						unset($tables[$index]);
-					}
-				}
-			}
-
-			return $tables;
-
-		}
-
-		private function __dumpStructuralData($dump, $data_tables, $tbl_prefix = NULL){
-
-			## Create variables for the dump files
-			$sql_data = NULL;
-
-			## Grab the data
-			foreach($data_tables as $t){
-				$sql_data .= $dump->export($t, MySQLDump::ALL);
-			}
-
-			if($tbl_prefix !== NULL) {
-				$sql_schema = str_replace('`' . $tbl_prefix, '`tbl_', $sql_schema);
-			}
-
-			return $sql_data;
-
-		}
-
 	}
