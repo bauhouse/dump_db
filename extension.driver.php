@@ -107,6 +107,7 @@
 			
 			$span = new XMLElement('span', NULL, array('class' => 'frame'));
 			$span->appendChild(new XMLElement('button', __('Save Authors'), array_merge(array('name' => 'action[dump][authors]', 'type' => 'submit'), $disabled)));
+			$span->appendChild(new XMLElement('button', __('Save Structure'), array_merge(array('name' => 'action[dump][structure]', 'type' => 'submit'), $disabled)));
 			$span->appendChild(new XMLElement('button', __('Save Data'), array_merge(array('name' => 'action[dump][data]', 'type' => 'submit'), $disabled)));
 			$div->appendChild($span);
 			
@@ -118,6 +119,7 @@
 			
 			$span = new XMLElement('span', NULL, array('class' => 'frame'));
 			$span->appendChild(new XMLElement('button', __('Restore Authors'), array_merge(array('name' => 'action[restore][authors]', 'type' => 'submit'), $disabled)));
+			$span->appendChild(new XMLElement('button', __('Restore Structure'), array_merge(array('name' => 'action[restore][structure]', 'type' => 'submit'), $disabled)));
 			$span->appendChild(new XMLElement('button', __('Restore Data'), array_merge(array('name' => 'action[restore][data]', 'type' => 'submit'), $disabled)));
 			$div->appendChild($span);
 			
@@ -231,6 +233,20 @@
 						default: // ignore everything but the authors
 							break;
 					}
+				}
+				if($mode == 'structure') {
+					switch($table) {
+						case 'tbl_authors': // ignore authors
+						case 'tbl_forgotpass':
+						case 'tbl_sessions':
+							break;
+						case 'tbl_cache':
+							$sql_data .= $dump->export($table, MySQLDump::STRUCTURE_ONLY);
+							break;
+						default:
+							$sql_data .= $dump->export($table, MySQLDump::STRUCTURE_ONLY);
+					}
+
 				}
 				elseif($mode == 'data') {
 					switch($table) {
