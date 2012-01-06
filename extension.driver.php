@@ -213,7 +213,10 @@
 			$tables = array_map (create_function ('$x', 'return $x[0];'), $rows);
 			
 			$mode = NULL;
-			$mode = (isset($_POST['action']['dump']['authors']))? 'authors' : 'data';
+			if(isset($_POST['action']['dump'])) {
+				$dump_action_array = array_keys($_POST['action']['dump']);
+				$mode = $dump_action_array[0];
+			}
 			if($mode == NULL) return;
 			
 			$filename = $this->generateFilename($mode);
